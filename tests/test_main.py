@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from uuid import uuid4
 from pyddb import BaseItem
 from pyddb.attributes import KeyAttribute, DelimitedAttribute, item_key

@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from pyddb import BaseItem
 
 
-__all__ = ['CustomAttribute', 'KeyAttribute', 'DelimitedAttribute']
+__all__ = ['CustomAttribute', 'KeyAttribute', 'DelimitedAttribute', 'item_key', 'asdict']
 
 
 AttrType = TypeVar('AttrType')
