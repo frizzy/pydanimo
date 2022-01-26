@@ -1,2 +1,3 @@
-# pydanimo
+# PyDDB
+
 Python DynamoDB Abstraction layer
