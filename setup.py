@@ -10,7 +10,7 @@ setuptools.setup(
     description="Python DynamoDB Abstraction layer",
     long_description=long_description,
     url="https://github.com/frizzy/pyddb",
-    packages=["pydanimo"],
+    packages=["pyddb"],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
