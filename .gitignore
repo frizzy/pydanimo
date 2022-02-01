@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 
 package.json.bak
+setup.py.bak
 
 # C extensions
 *.so
