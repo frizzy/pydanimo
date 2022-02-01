@@ -21,10 +21,9 @@ tag:
 	new_version="$${version_major}.$${version_minor}.$${version_patch}" && \
 	echo "Updating version to: $${version_major}.$${version_minor}.$${version_patch}" && \
 	sed -i.bak "s/\"version\": \"$${current_version}\"/\"version\": \"$${new_version}\"/g" package.json && \
-	sed -i.bak "s/version=\"$${current_version}\",/version=\"$${new_version}\",/g" setup.py
-	# && \
-	# git add package.json && \
-	# git commit -m "[skip ci] Update version to $${new_version}" && \
-	# git push && \
-	# git tag "v$${new_version}" && \
-	# git push origin "v$${new_version}"
+	sed -i.bak "s/version=\"$${current_version}\",/version=\"$${new_version}\",/g" setup.py && \
+	git add package.json && \
+	git commit -m "[skip ci] Update version to $${new_version}" && \
+	git push && \
+	git tag "v$${new_version}" && \
+	git push origin "v$${new_version}"
