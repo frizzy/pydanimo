@@ -5,6 +5,8 @@ from enum import Enum
 if TYPE_CHECKING:
     from pyddb import BaseItem
 
+__all__ = ['Update', 'update_args']
+
 
 class Update():
 
