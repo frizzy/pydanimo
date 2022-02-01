@@ -1,8 +1,9 @@
 from datetime import datetime
 from uuid import uuid4
 from pyddb import BaseItem
-from pyddb.attributes import KeyAttribute, DelimitedAttribute, item_key
+from pyddb.attributes import KeyAttribute, DelimitedAttribute, item_key, asdict
 from pydantic import UUID4
+from fastapi.encoders import jsonable_encoder
 
 
 def test_item_key():

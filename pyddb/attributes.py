@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Union, Generic, TypeVar, Optional, Any, TYPE_CHECKING
-from datetime import datetime, timezone
+from datetime import datetime, date, timezone
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel, create_model
 from pydantic.fields import ModelField
@@ -24,7 +24,8 @@ custom_encoders = {
     datetime: lambda dt: (
         f"{dt.astimezone(tz=timezone.utc).isoformat(sep='T', timespec='milliseconds')[:-6]}"
         "Z"
-    )
+    ),
+    date: str
 }
 
 
@@ -81,7 +82,6 @@ class DelimitedAttribute(CustomAttribute):
         return self.Settings.delimiter.join(map(str, asdict(self, exclude_none=True).values()))
 
     @classmethod
-    @property
     def create_partial(cls):
         if not cls._partial:
             cls._partial = create_model(f"{cls.__name__}Partial", __base__=cls)
@@ -92,6 +92,6 @@ class DelimitedAttribute(CustomAttribute):
 
 
 def item_key(item: 'BaseItem'):
-    return asdict(item, include=set([
-        key for key in item.__fields__ if issubclass(item.__fields__[key].type_, KeyAttribute)
+    return asdict(item, exclude=set([
+        name for name, field in item.__fields__.items() if not issubclass(field.type_, KeyAttribute)
     ]))

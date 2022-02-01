@@ -1,10 +1,14 @@
 from pydantic import BaseModel, root_validator
 from pyddb.attributes import KeyAttribute, CustomAttribute
 
-__all__ = ["BaseItem"]
+__all__ = ['BaseItem']
 
 
 class BaseItem(BaseModel):
+
+    def __init_subclass__(cls) -> None:
+        return super().__init_subclass__()
+
     @root_validator(pre=True)
     @classmethod
     def _pre_validate(cls, values):
