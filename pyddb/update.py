@@ -1,6 +1,9 @@
-from pyddb import BaseItem
+from typing import TYPE_CHECKING
 from pyddb.attributes import item_key, asdict
 from enum import Enum
+
+if TYPE_CHECKING:
+    from pyddb import BaseItem
 
 
 class Update():
@@ -31,7 +34,7 @@ class Update():
         self.action = self.Action.DELETE
         return self
 
-    def __call__(self, item: BaseItem):
+    def __call__(self, item: 'BaseItem'):
         key_attribute = item_key(item)
         if self.action == self.Action.SET:
             if self.name:
@@ -50,7 +53,7 @@ class Update():
                         )
 
 
-def update_args(item: BaseItem, *actions, return_values: str = 'ALL_OLD'):
+def update_args(item: 'BaseItem', *actions, return_values: str = 'ALL_OLD'):
     attributes = asdict(item)
     expressions = {}
     names = {}

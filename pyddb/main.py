@@ -1,10 +1,18 @@
 from pydantic import BaseModel, root_validator
 from pyddb.attributes import KeyAttribute, CustomAttribute
+from pyddb.update import update_args
 
 __all__ = ['BaseItem']
 
 
+class MissingTableResourceError(Exception):
+    pass
+
+
 class BaseItem(BaseModel):
+
+    class DynamoDb:
+        table = None
 
     def __init_subclass__(cls) -> None:
         return super().__init_subclass__()
@@ -28,3 +36,8 @@ class BaseItem(BaseModel):
             if isinstance(value, KeyAttribute):
                 values.update({key: value.value})
         return values
+
+    def update(self, *actions, **kwargs):
+        if not self.__class__.DynamoDb.table:
+            raise MissingTableResourceError()
+        return self.__class__.DynamoDb.table.update_item(update_args(self, actions, **kwargs))
