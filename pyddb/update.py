@@ -1,11 +1,6 @@
-from curses import KEY_UNDO
 from pyddb import BaseItem
 from pyddb.attributes import item_key, asdict
 from enum import Enum
-
-
-class InvalidMethodCallError(Exception):
-    pass
 
 
 class Update():
