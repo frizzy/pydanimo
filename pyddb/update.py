@@ -43,7 +43,7 @@ class Update():
                 yield (
                     self.Action.SET.value,
                     self.name,
-                    f'#{self.name} = :{self.name}'
+                    f'{self.name} = :{self.name}'
                 )
             else:
                 for name in item.__fields__:
@@ -51,7 +51,7 @@ class Update():
                         yield (
                             self.Action.SET.value,
                             name,
-                            f'#{name} = :{name}'
+                            f'{name} = :{name}'
                         )
 
 
@@ -70,7 +70,7 @@ def update_args(item: 'BaseItem', *actions, return_values: str = 'ALL_OLD'):
     return dict(
         Key=item_key(item),
         ReturnValues=return_values,
-        UpdateExpression=' '.join([f"{key} {' '.join(value)}" for key, value in expressions.items()]),
+        UpdateExpression=' '.join([f"{key} {', '.join(value)}" for key, value in expressions.items()]),
         ExpressionAttributeValues=values,
         ExpressionAttributeNames=names
     )

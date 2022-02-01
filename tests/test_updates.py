@@ -15,7 +15,7 @@ def test_update_item_attribute():
     assert update_args(item, Update('age').set()) == {
         'Key': {'my_id': '12345'},
         'ReturnValues': 'ALL_OLD',
-        'UpdateExpression': 'SET #age = :age',
+        'UpdateExpression': 'SET age = :age',
         'ExpressionAttributeValues': {':age': 473},
         'ExpressionAttributeNames': {'age': ':age'}
     }
@@ -33,7 +33,7 @@ def test_update_item_attributes():
     assert update_args(item, Update().set()) == {
         'Key': {'my_id': '12345'},
         'ReturnValues': 'ALL_OLD',
-        'UpdateExpression': 'SET #age = :age #eye_color = :eye_color',
+        'UpdateExpression': 'SET age = :age, eye_color = :eye_color',
         'ExpressionAttributeValues': {':age': 473, ':eye_color': 'spotty'},
         'ExpressionAttributeNames': {'age': ':age', 'eye_color': ':eye_color'}
     }
