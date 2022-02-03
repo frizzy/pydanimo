@@ -1,5 +1,5 @@
 from pyddb import BaseItem
-from pyddb.attributes import KeyAttribute, item_key
+from pyddb.attributes import KeyAttribute
 from pyddb.update import update_args, Update
 from moto import mock_dynamodb2
 import boto3
@@ -67,7 +67,7 @@ def test_update_item():
         table = dynamodb.Table('my_table')
 
         table.update_item(**update_args(item, Update().set()))
-        response = table.get_item(Key=item_key(item))
+        response = table.get_item(Key=MyItem.key(item).as_dict())
         my_item = MyItem.parse_obj(response['Item'])
 
         assert my_item.my_id == item.my_id

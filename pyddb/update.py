@@ -1,7 +1,4 @@
-from typing import TYPE_CHECKING, Optional, Union, List
-
-from attr import attr
-from pyddb.attributes import item_key, asdict
+from typing import TYPE_CHECKING, Optional, Union
 from enum import Enum
 
 if TYPE_CHECKING:
@@ -47,10 +44,10 @@ class Update():
 
     def __call__(self, item: 'BaseItem', attributes: dict, expressions, names, values):
 
-        key_attribute = item_key(item)
+        item_key = item.__class__.key(item)
 
         for name in self.names if self.names else item.__fields__.keys():
-            if name not in key_attribute:
+            if not hasattr(item_key, name):
                 expressions.setdefault(self.action.value, [])
                 getattr(self, f'_{self.action.value.lower()}')(name, expressions)
                 names.update({f'#{name}': name})
@@ -65,7 +62,7 @@ class Update():
 
 
 def update_args(item: 'BaseItem', *actions, return_values: str = 'ALL_OLD'):
-    attributes = asdict(item)
+    attributes = item.as_dict()
     expressions = {}
     names = {}
     values = {}
@@ -73,7 +70,7 @@ def update_args(item: 'BaseItem', *actions, return_values: str = 'ALL_OLD'):
         action(item, attributes, expressions, names, values)
 
     return dict(
-        Key=item_key(item),
+        Key=item.__class__.key(item).as_dict(),
         ReturnValues=return_values,
         UpdateExpression=' '.join([f"{key} {', '.join(value)}" for key, value in expressions.items()]),
         ExpressionAttributeValues=values,

@@ -1,9 +1,9 @@
+import pytest
 from datetime import datetime
 from uuid import uuid4
 from pyddb import BaseItem
-from pyddb.attributes import KeyAttribute, DelimitedAttribute, item_key, asdict
+from pyddb.attributes import KeyAttribute, DelimitedAttribute
 from pydantic import UUID4
-from fastapi.encoders import jsonable_encoder
 
 
 def test_item_key():
@@ -12,7 +12,7 @@ def test_item_key():
         id: KeyAttribute[str]
 
     item = Item(id='my_id')
-    assert item_key(item) == {'id': 'my_id'}
+    assert Item.key(item).as_dict() == {'id': 'my_id'}
 
 
 def test_item_key_with_uuid():
@@ -23,7 +23,7 @@ def test_item_key_with_uuid():
     item_id = uuid4()
 
     item = Item(id=item_id)
-    assert item_key(item) == {'id': str(item_id)}
+    assert Item.key(item).as_dict() == {'id': str(item_id)}
 
 
 def test_item_key_with_delimited_attribute():
@@ -44,3 +44,15 @@ def test_item_key_with_delimited_attribute():
     item = Item(id='my_id', something='ONE/2/2022-01-26T09:22:00.819Z')
 
     assert type(item.something.three) is datetime
+
+
+def test_key_item_class():
+
+    class FooItem(BaseItem):
+        foo: KeyAttribute[str]
+        something: int
+
+    key = FooItem.key(foo='barbar')
+
+    with pytest.raises(AttributeError):
+        print(key.something)

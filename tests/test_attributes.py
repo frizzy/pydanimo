@@ -1,7 +1,6 @@
 from datetime import date
 from pydantic import BaseModel
 from pyddb import BaseItem
-from pyddb.attributes import asdict
 
 
 def test_asdict():
@@ -20,6 +19,6 @@ def test_asdict():
 
     assert type(item.person.date_of_birth) is date
 
-    assert asdict(item) == {
+    assert item.as_dict() == {
         'id': 'my_id', 'person': {'firstname': 'Max', 'lastname': 'van Steen', 'date_of_birth': '1996-08-03'}
     }

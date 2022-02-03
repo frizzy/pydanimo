@@ -1,7 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Union, Generic, TypeVar, Optional, Any, TYPE_CHECKING
-from datetime import datetime, date, timezone
-from fastapi.encoders import jsonable_encoder
+from typing import Callable, Union, Generic, TypeVar, Optional, Any, TYPE_CHECKING
 from pydantic import BaseModel, create_model
 from pydantic.fields import ModelField
 
@@ -10,7 +8,7 @@ if TYPE_CHECKING:
     from pyddb import BaseItem
 
 
-__all__ = ['CustomAttribute', 'KeyAttribute', 'DelimitedAttribute', 'item_key', 'asdict']
+__all__ = ['CustomAttribute', 'KeyAttribute', 'DelimitedAttribute']
 
 
 AttrType = TypeVar('AttrType')
@@ -20,30 +18,13 @@ class AttributeValidationError(Exception):
     pass
 
 
-custom_encoders = {
-    datetime: lambda dt: (
-        f"{dt.astimezone(tz=timezone.utc).isoformat(sep='T', timespec='milliseconds')[:-6]}"
-        "Z"
-    ),
-    date: str
-}
-
-
-def asdict(item: 'BaseItem', **kwargs) -> dict:
-    return jsonable_encoder(
-        {k: v.serialize() if isinstance(v, CustomAttribute) else v for k, v in item},
-        custom_encoder=custom_encoders,
-        **kwargs,
-    )
-
-
 class CustomAttribute(BaseModel, ABC):
     @classmethod
     def deserialize(cls, values: Any) -> Any:
         return values
 
     @abstractmethod
-    def serialize(self) -> Union[str, list, set, dict, None]:
+    def serialize(self, serializer: Callable) -> Union[str, list, set, dict, None]:
         ...
 
 
@@ -78,8 +59,8 @@ class DelimitedAttribute(CustomAttribute):
             return dict(zip(cls.__fields__.keys(), values.split(cls.Settings.delimiter)))
         return super().deserialize(values)
 
-    def serialize(self):
-        return self.Settings.delimiter.join(map(str, asdict(self, exclude_none=True).values()))
+    def serialize(self, serializer):
+        return self.Settings.delimiter.join(map(str, serializer(self, exclude_none=True).values()))
 
     @classmethod
     def create_partial(cls):
@@ -89,9 +70,3 @@ class DelimitedAttribute(CustomAttribute):
                 field.outer_type_ = Optional
                 field.required = False
         return cls._partial
-
-
-def item_key(item: 'BaseItem'):
-    return asdict(item, exclude=set([
-        name for name, field in item.__fields__.items() if not issubclass(field.type_, KeyAttribute)
-    ]))
