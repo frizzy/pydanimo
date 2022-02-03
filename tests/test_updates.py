@@ -1,6 +1,8 @@
 from pyddb import BaseItem
-from pyddb.attributes import KeyAttribute
+from pyddb.attributes import KeyAttribute, item_key
 from pyddb.update import update_args, Update
+from moto import mock_dynamodb2
+import boto3
 
 
 def test_update_item_attribute():
@@ -15,9 +17,9 @@ def test_update_item_attribute():
     assert update_args(item, Update('age').set()) == {
         'Key': {'my_id': '12345'},
         'ReturnValues': 'ALL_OLD',
-        'UpdateExpression': 'SET age = :age',
+        'UpdateExpression': 'SET #age = :age',
         'ExpressionAttributeValues': {':age': 473},
-        'ExpressionAttributeNames': {'age': ':age'}
+        'ExpressionAttributeNames': {'#age': 'age'}
     }
 
 
@@ -33,7 +35,41 @@ def test_update_item_attributes():
     assert update_args(item, Update().set()) == {
         'Key': {'my_id': '12345'},
         'ReturnValues': 'ALL_OLD',
-        'UpdateExpression': 'SET age = :age, eye_color = :eye_color',
+        'UpdateExpression': 'SET #age = :age, #eye_color = :eye_color',
         'ExpressionAttributeValues': {':age': 473, ':eye_color': 'spotty'},
-        'ExpressionAttributeNames': {'age': ':age', 'eye_color': ':eye_color'}
+        'ExpressionAttributeNames': {'#age': 'age', '#eye_color': 'eye_color'}
     }
+
+
+def test_update_item():
+
+    class MyItem(BaseItem):
+        my_id: KeyAttribute[str]
+        age: int
+        eye_color: str
+
+    item = MyItem(my_id='Foo', age=512, eye_color='pineapple')
+
+    with mock_dynamodb2():
+        dynamodb = boto3.resource('dynamodb', region_name='eu-west-2')
+        dynamodb.create_table(
+            TableName='my_table',
+            KeySchema=[{
+                'AttributeName': 'my_id',
+                'KeyType': 'HASH'
+            }],
+            AttributeDefinitions=[{
+                'AttributeName': 'my_id',
+                'AttributeType': 'S'
+            }]
+        )
+
+        table = dynamodb.Table('my_table')
+
+        table.update_item(**update_args(item, Update().set()))
+        response = table.get_item(Key=item_key(item))
+        my_item = MyItem.parse_obj(response['Item'])
+
+        assert my_item.my_id == item.my_id
+
+        table.delete()

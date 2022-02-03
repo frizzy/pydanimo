@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Union, List
+
+from attr import attr
 from pyddb.attributes import item_key, asdict
 from enum import Enum
 
@@ -6,6 +8,10 @@ if TYPE_CHECKING:
     from pyddb import BaseItem
 
 __all__ = ['Update', 'update_args']
+
+
+class AttributeReferenceError(Exception):
+    pass
 
 
 class Update():
@@ -16,12 +22,15 @@ class Update():
         ADD = 'ADD'
         DELETE = 'DELETE'
 
-    def __init__(self, name: str = None):
-        self.name = name
+    def __init__(self, *names):
+        self.names = names
         self.action = None
+        self.value = None
 
-    def set(self):
+    def set(self, value: Optional[Union[str, int, float, list, set, dict]] = None):
         self.action = self.Action.SET
+        self._validate_value(value)
+        self.value = value
         return self
 
     def remove(self):
@@ -36,23 +45,23 @@ class Update():
         self.action = self.Action.DELETE
         return self
 
-    def __call__(self, item: 'BaseItem'):
+    def __call__(self, item: 'BaseItem', attributes: dict, expressions, names, values):
+
         key_attribute = item_key(item)
-        if self.action == self.Action.SET:
-            if self.name:
-                yield (
-                    self.Action.SET.value,
-                    self.name,
-                    f'{self.name} = :{self.name}'
-                )
-            else:
-                for name in item.__fields__:
-                    if name not in key_attribute:
-                        yield (
-                            self.Action.SET.value,
-                            name,
-                            f'{name} = :{name}'
-                        )
+
+        for name in self.names if self.names else item.__fields__.keys():
+            if name not in key_attribute:
+                expressions.setdefault(self.action.value, [])
+                getattr(self, f'_{self.action.value.lower()}')(name, expressions)
+                names.update({f'#{name}': name})
+                values.update({f':{name}': self.value if self.value else attributes[name]})
+
+    def _set(self, name, expressions):
+        expressions[self.Action.SET.value].append(f'#{name} = :{name}')
+
+    def _validate_value(self, value):
+        if value and len(self.names) != 1:
+            raise AttributeReferenceError('Requires one explicit attribute name to set value')
 
 
 def update_args(item: 'BaseItem', *actions, return_values: str = 'ALL_OLD'):
@@ -61,11 +70,7 @@ def update_args(item: 'BaseItem', *actions, return_values: str = 'ALL_OLD'):
     names = {}
     values = {}
     for action in actions:
-        for action_type, name, expression in action(item):
-            expressions.setdefault(action_type, [])
-            expressions[action_type].append(expression)
-            values.update({f':{name}': attributes[name]})
-            names.update({name: f':{name}'})
+        action(item, attributes, expressions, names, values)
 
     return dict(
         Key=item_key(item),
