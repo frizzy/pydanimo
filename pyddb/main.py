@@ -1,4 +1,5 @@
 from datetime import datetime, date, timezone
+from typing import Optional
 from pydantic import BaseModel, root_validator
 from pyddb.attributes import KeyAttribute, CustomAttribute
 from fastapi.encoders import jsonable_encoder
@@ -39,6 +40,9 @@ class BaseItem(BaseModel):
             for key in list(cls.__fields__.keys()):
                 if not issubclass(cls.__fields__[key].type_, KeyAttribute):
                     cls.__fields__.pop(key)
+                    continue
+                cls.__fields__[key].outer_type_ = Optional
+                cls.__fields__[key].required = False
         super().__init_subclass__(**kwargs)
 
     @root_validator(pre=True)

@@ -56,3 +56,9 @@ def test_key_item_class():
 
     with pytest.raises(AttributeError):
         print(key.something)
+
+    class Foobar(BaseItem):
+        foo: KeyAttribute[str]
+        bar: KeyAttribute[str]
+
+    key = Foobar.key(foo='foooo')
