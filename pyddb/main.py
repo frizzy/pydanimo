@@ -1,4 +1,5 @@
 from datetime import datetime, date, timezone
+from attr import field
 from pydantic import BaseModel, root_validator
 from pyddb.attributes import KeyAttribute, CustomAttribute
 from fastapi.encoders import jsonable_encoder
@@ -16,8 +17,14 @@ class BaseItem(BaseModel):
         return ItemKey(**(item.dict() if item else kwargs))
 
     def as_dict(self, **kwargs):
+        model = self.copy(deep=True)
+        for k, v in model:
+            field = model.__class__.__fields__[k]
+            if issubclass(field.type_, CustomAttribute) or issubclass(field.type_, KeyAttribute) and issubclass(field.sub_fields[0].type_, CustomAttribute):
+                setattr(model, k, v.serialize(BaseItem.as_dict))
+
         return jsonable_encoder(
-            {k: v.serialize(BaseItem.as_dict) if isinstance(v, CustomAttribute) else v for k, v in self},
+            model,
             custom_encoder={
                 datetime: lambda dt: (
                     f"{dt.astimezone(tz=timezone.utc).isoformat(sep='T', timespec='milliseconds')[:-6]}"
@@ -25,7 +32,7 @@ class BaseItem(BaseModel):
                 ),
                 date: str
             },
-            **kwargs,
+            **kwargs
         )
 
     def __init_subclass__(cls, **kwargs) -> None:

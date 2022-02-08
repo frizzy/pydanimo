@@ -1,5 +1,8 @@
+from dataclasses import MISSING
 from typing import TYPE_CHECKING, Optional, Union
 from enum import Enum
+
+from attr import attr
 
 if TYPE_CHECKING:
     from pyddb import BaseItem
@@ -9,6 +12,9 @@ __all__ = ['Update', 'update_args']
 
 class AttributeReferenceError(Exception):
     pass
+
+
+MISSING = '___MISSING___'
 
 
 class Update():
@@ -22,9 +28,9 @@ class Update():
     def __init__(self, *names):
         self.names = names
         self.action = None
-        self.value = None
+        self.value = MISSING
 
-    def set(self, value: Optional[Union[str, int, float, list, set, dict]] = None):
+    def set(self, value: Optional[Union[str, int, float, list, set, dict, None, bool]] = MISSING):
         self.action = self.Action.SET
         self._validate_value(value)
         self.value = value
@@ -47,22 +53,27 @@ class Update():
         item_key = item.__class__.key(item)
 
         for name in self.names if self.names else item.__fields__.keys():
-            if not hasattr(item_key, name):
-                expressions.setdefault(self.action.value, [])
-                getattr(self, f'_{self.action.value.lower()}')(name, expressions)
-                names.update({f'#{name}': name})
-                values.update({f':{name}': self.value if self.value else attributes[name]})
+            if hasattr(item_key, name):
+                continue
+
+            if self.value == MISSING and name not in attributes:
+                continue
+
+            expressions.setdefault(self.action.value, [])
+            getattr(self, f'_{self.action.value.lower()}')(name, expressions)
+            names.update({f'#{name}': name})
+            values.update({f':{name}': attributes[name] if self.value == MISSING else self.value})
 
     def _set(self, name, expressions):
         expressions[self.Action.SET.value].append(f'#{name} = :{name}')
 
     def _validate_value(self, value):
-        if value and len(self.names) != 1:
+        if value != MISSING and len(self.names) != 1:
             raise AttributeReferenceError('Requires one explicit attribute name to set value')
 
 
-def update_args(item: 'BaseItem', *actions, return_values: str = 'ALL_OLD'):
-    attributes = item.as_dict()
+def update_args(item: 'BaseItem', *actions, **kwargs):
+    attributes = item.as_dict(exclude_unset=True)
     expressions = {}
     names = {}
     values = {}
@@ -71,8 +82,8 @@ def update_args(item: 'BaseItem', *actions, return_values: str = 'ALL_OLD'):
 
     return dict(
         Key=item.__class__.key(item).as_dict(),
-        ReturnValues=return_values,
         UpdateExpression=' '.join([f"{key} {', '.join(value)}" for key, value in expressions.items()]),
         ExpressionAttributeValues=values,
-        ExpressionAttributeNames=names
+        ExpressionAttributeNames=names,
+        **kwargs
     )

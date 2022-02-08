@@ -1,3 +1,4 @@
+from typing import Optional
 from pyddb import BaseItem
 from pyddb.attributes import KeyAttribute
 from pyddb.update import update_args, Update
@@ -14,7 +15,7 @@ def test_update_item_attribute():
 
     item = MyItem(my_id='12345', age=473, eye_color='spotty')
 
-    assert update_args(item, Update('age').set()) == {
+    assert update_args(item, Update('age').set(), ReturnValues='ALL_OLD') == {
         'Key': {'my_id': '12345'},
         'ReturnValues': 'ALL_OLD',
         'UpdateExpression': 'SET #age = :age',
@@ -32,13 +33,24 @@ def test_update_item_attributes():
 
     item = MyItem(my_id='12345', age=473, eye_color='spotty')
 
-    assert update_args(item, Update().set()) == {
+    assert update_args(item, Update().set(), ReturnValues='ALL_OLD') == {
         'Key': {'my_id': '12345'},
         'ReturnValues': 'ALL_OLD',
         'UpdateExpression': 'SET #age = :age, #eye_color = :eye_color',
         'ExpressionAttributeValues': {':age': 473, ':eye_color': 'spotty'},
         'ExpressionAttributeNames': {'#age': 'age', '#eye_color': 'eye_color'}
     }
+
+
+def test_update_item_with_optionals():
+
+    class FooItem(BaseItem):
+        pk: KeyAttribute[str]
+        something: Optional[str]
+
+    item = FooItem(pk='foo')
+
+    # print(item.as_dict(exclude_unset=True))
 
 
 def test_update_item():
