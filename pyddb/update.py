@@ -2,7 +2,6 @@ from dataclasses import MISSING
 from typing import TYPE_CHECKING, Optional, Union
 from enum import Enum
 
-from attr import attr
 
 if TYPE_CHECKING:
     from pyddb import BaseItem

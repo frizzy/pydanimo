@@ -1,5 +1,4 @@
 from datetime import datetime, date, timezone
-from attr import field
 from pydantic import BaseModel, root_validator
 from pyddb.attributes import KeyAttribute, CustomAttribute
 from fastapi.encoders import jsonable_encoder

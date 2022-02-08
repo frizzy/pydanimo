@@ -78,10 +78,12 @@ def test_update_item():
 
         table = dynamodb.Table('my_table')
 
-        table.update_item(**update_args(item, Update().set()))
-        response = table.get_item(Key=MyItem.key(item).as_dict())
-        my_item = MyItem.parse_obj(response['Item'])
+        update_response = table.update_item(**update_args(item, Update().set(), ReturnValues='ALL_NEW'))
+        update_item = MyItem.parse_obj(update_response['Attributes'])
 
-        assert my_item.my_id == item.my_id
+        read_response = table.get_item(Key=MyItem.key(item).as_dict())
+        read_item = MyItem.parse_obj(read_response['Item'])
+
+        assert update_item.my_id == read_item.my_id
 
         table.delete()
