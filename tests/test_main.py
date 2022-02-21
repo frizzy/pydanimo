@@ -79,3 +79,5 @@ def test_key_compound_optionals():
         sk: KeyAttribute[SortKey]
 
     key = FooItem.key(pk=dict(moo_id=uuid4()))
+
+    print(key.as_dict(exclude_unset=True))

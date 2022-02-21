@@ -19,8 +19,7 @@ class BaseItem(BaseModel):
     def as_dict(self, **kwargs):
         model = self.copy(deep=True)
         for k, v in model:
-            field = model.__class__.__fields__[k]
-            if issubclass(field.type_, CustomAttribute) or issubclass(field.type_, KeyAttribute) and issubclass(field.sub_fields[0].type_, CustomAttribute):
+            if isinstance(v, CustomAttribute):
                 setattr(model, k, v.serialize(BaseItem.as_dict))
 
         return jsonable_encoder(
