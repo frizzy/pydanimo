@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pyddb",
-    version="0.1.7",
+    version="0.1.8",
     author="Bernard van Niekerk",
     description="Python DynamoDB Abstraction layer",
     long_description=long_description,
