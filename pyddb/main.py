@@ -49,11 +49,11 @@ class BaseItem(BaseModel):
     @classmethod
     def _pre_validate(cls, values):
         for key, field in cls.__fields__.items():
-            if issubclass(field.type_, CustomAttribute):
+            if issubclass(field.type_, CustomAttribute) and key in values:
                 values.update({key: field.type_.deserialize(values[key])})
             elif issubclass(field.type_, KeyAttribute) and issubclass(
                 field.sub_fields[0].type_, CustomAttribute
-            ):
+            ) and key in values:
                 values.update({key: field.sub_fields[0].type_.deserialize(values[key])})
         return values
 

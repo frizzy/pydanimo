@@ -62,3 +62,20 @@ def test_key_item_class():
         bar: KeyAttribute[str]
 
     key = Foobar.key(foo='foooo')
+
+
+def test_key_compound_optionals():
+
+    class PartitionKey(DelimitedAttribute):
+        type: str = 'moo_pk'
+        moo_id: UUID4
+
+    class SortKey(DelimitedAttribute):
+        type: str = 'sort_sk'
+        sort_id: UUID4
+
+    class FooItem(BaseItem):
+        pk: KeyAttribute[PartitionKey]
+        sk: KeyAttribute[SortKey]
+
+    key = FooItem.key(pk=dict(moo_id=uuid4()))

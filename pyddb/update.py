@@ -1,7 +1,7 @@
 from dataclasses import MISSING
 from typing import TYPE_CHECKING, Optional, Union
 from enum import Enum
-
+from uuid import uuid4
 
 if TYPE_CHECKING:
     from pyddb import BaseItem
@@ -13,7 +13,7 @@ class AttributeReferenceError(Exception):
     pass
 
 
-MISSING = '___MISSING___'
+MISSING = f'___MISSING___{str(uuid4())}'
 
 
 class Update():
