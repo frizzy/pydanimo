@@ -79,7 +79,7 @@ def test_key_compound_optionals():
         pk: KeyAttribute[PartitionKey]
         sk: KeyAttribute[SortKey]
 
-    # key = FooItem.key(pk=dict(moo_id=uuid4()))
+    foo = FooItem(pk=dict(moo_id=uuid4()), sk=SortKey(sort_id=uuid4()))
 
     sort_id = uuid4()
     key = FooItem.match('sk', sort_id=sort_id)

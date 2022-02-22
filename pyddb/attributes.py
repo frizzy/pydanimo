@@ -47,7 +47,7 @@ class KeyAttribute(Generic[AttrType]):
         return cls(valid_value)
 
 
-class DelimitedAttribute(BaseModel, Serializable, Deserializable):
+class DelimitedAttribute(Serializable, Deserializable, BaseModel):
     class Settings:
         delimiter = "#"
 
@@ -55,7 +55,8 @@ class DelimitedAttribute(BaseModel, Serializable, Deserializable):
     def deserialize(cls, values):
         if isinstance(values, str):
             return dict(zip(cls.__fields__.keys(), values.split(cls.Settings.delimiter)))
-        return super().deserialize(values)
+        elif isinstance(values, (cls, dict)):
+            return values
 
     def serialize(self):
         return self.Settings.delimiter.join(map(str, as_dict(self, exclude_none=True).values()))
