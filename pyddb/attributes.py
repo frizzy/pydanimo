@@ -1,11 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Callable, Union, Generic, TypeVar, Optional, Any, TYPE_CHECKING
-from pydantic import BaseModel, create_model
+from typing import Callable, Protocol, Union, Generic, TypeVar, Any, TYPE_CHECKING
+from pydantic import BaseModel
 from pydantic.fields import ModelField
-
-
-if TYPE_CHECKING:
-    from pyddb import BaseItem
+from pyddb.encoders import as_dict
 
 
 __all__ = ['CustomAttribute', 'KeyAttribute', 'DelimitedAttribute']
@@ -18,13 +15,16 @@ class AttributeValidationError(Exception):
     pass
 
 
-class CustomAttribute(BaseModel, ABC):
-    @classmethod
-    def deserialize(cls, values: Any) -> Any:
-        return values
-
+class Serializable(ABC):
     @abstractmethod
-    def serialize(self, serializer: Callable) -> Union[str, list, set, dict, None]:
+    def serialize(self) -> Any:
+        ...
+
+
+class Deserializable(ABC):
+    @classmethod
+    @abstractmethod
+    def deserialize(cls, values: Any) -> Any:
         ...
 
 
@@ -47,11 +47,9 @@ class KeyAttribute(Generic[AttrType]):
         return cls(valid_value)
 
 
-class DelimitedAttribute(CustomAttribute):
+class DelimitedAttribute(BaseModel, Serializable, Deserializable):
     class Settings:
         delimiter = "#"
-
-    _partial = None
 
     @classmethod
     def deserialize(cls, values):
@@ -59,14 +57,8 @@ class DelimitedAttribute(CustomAttribute):
             return dict(zip(cls.__fields__.keys(), values.split(cls.Settings.delimiter)))
         return super().deserialize(values)
 
-    def serialize(self, serializer):
-        return self.Settings.delimiter.join(map(str, serializer(self, exclude_none=True).values()))
+    def serialize(self):
+        return self.Settings.delimiter.join(map(str, as_dict(self, exclude_none=True).values()))
 
-    @classmethod
-    def create_partial(cls):
-        if not cls._partial:
-            cls._partial = create_model(f"{cls.__name__}Partial", __base__=cls)
-            for field in cls._partial.__fields__.values():
-                field.outer_type_ = Optional
-                field.required = False
-        return cls._partial
+    def __str__(self):
+        return self.serialize()

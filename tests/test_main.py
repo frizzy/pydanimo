@@ -62,6 +62,7 @@ def test_key_item_class():
         bar: KeyAttribute[str]
 
     key = Foobar.key(foo='foooo')
+    assert dict(key) == {'foo': 'foooo'}
 
 
 def test_key_compound_optionals():
@@ -78,6 +79,9 @@ def test_key_compound_optionals():
         pk: KeyAttribute[PartitionKey]
         sk: KeyAttribute[SortKey]
 
-    key = FooItem.key(pk=dict(moo_id=uuid4()))
+    # key = FooItem.key(pk=dict(moo_id=uuid4()))
 
-    print(str(key))
+    sort_id = uuid4()
+    key = FooItem.match('sk', sort_id=sort_id)
+
+    assert str(key) == 'sort_sk#{}'.format(sort_id)
