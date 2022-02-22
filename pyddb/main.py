@@ -12,9 +12,18 @@ class BaseItem(BaseModel):
 
     @classmethod
     def key(cls, item=None, **kwargs):
-        class ItemKey(cls, item_key=True):
-            pass
-        return ItemKey(**(item.dict() if item else kwargs))
+        def to_str(self):
+            for name in self.__fields__:
+                return self.as_dict()[name]
+
+        args = item.dict(exclude_unset=True) if item else kwargs
+        ItemKeyClass = type(
+            'ItemKey',
+            (cls, ),
+            {'__str__': to_str} if len(args) == 1 else {},
+            item_keys=args.keys()
+        )
+        return ItemKeyClass(**args)
 
     def as_dict(self, **kwargs):
         model = self.copy(deep=True)
@@ -35,9 +44,9 @@ class BaseItem(BaseModel):
         )
 
     def __init_subclass__(cls, **kwargs) -> None:
-        if kwargs.pop('item_key', False):
+        if (item_keys := kwargs.pop('item_keys', None)):
             for key in list(cls.__fields__.keys()):
-                if not issubclass(cls.__fields__[key].type_, KeyAttribute):
+                if not issubclass(cls.__fields__[key].type_, KeyAttribute) or key not in item_keys:
                     cls.__fields__.pop(key)
                     continue
                 cls.__fields__[key].outer_type_ = Optional

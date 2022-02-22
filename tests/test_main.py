@@ -80,4 +80,4 @@ def test_key_compound_optionals():
 
     key = FooItem.key(pk=dict(moo_id=uuid4()))
 
-    print(key.as_dict(exclude_unset=True))
+    print(str(key))
