@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Callable, Protocol, Union, Generic, TypeVar, Any, TYPE_CHECKING
+from typing import Generic, TypeVar, Any
 from pydantic import BaseModel
 from pydantic.fields import ModelField
 from pyddb.encoders import as_dict
@@ -9,10 +9,6 @@ __all__ = ['CustomAttribute', 'KeyAttribute', 'DelimitedAttribute']
 
 
 AttrType = TypeVar('AttrType')
-
-
-class AttributeValidationError(Exception):
-    pass
 
 
 class Serializable(ABC):
@@ -43,7 +39,7 @@ class KeyAttribute(Generic[AttrType]):
         _type = field.sub_fields[0]
         valid_value, error = _type.validate(v, {}, loc="value")
         if error:
-            raise AttributeValidationError(str(error))
+            raise ValueError(str(error))
         return cls(valid_value)
 
 
