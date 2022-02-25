@@ -54,3 +54,23 @@ def test_indexes():
 
     assert Foo.index_key('gsi_1', gsi_1_pk='cheese') == {'gsi_1_pk': 'cheese'}
     assert str(Foo.index_key('gsi_1', gsi_1_sk='cheese')) == 'cheese'
+
+
+def test_union_attribute():
+
+    class Foo(BaseItem):
+
+        class OddThing(DelimitedAttribute):
+            type: str = 'odd_thing'
+            id: UUID4
+
+        id: KeyAttribute[str]
+        something: int
+
+        mix: Union[OddThing, str]
+
+    foo = Foo(id='hello', something=2, mix='moo')
+    assert foo.mix == 'moo'
+    test_id = uuid4()
+    bar = Foo(id='hello', something=2, mix=Foo.OddThing(id=test_id))
+    assert bar.mix.id == test_id

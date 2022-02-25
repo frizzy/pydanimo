@@ -1,27 +1,14 @@
-from abc import ABC, abstractmethod
-from typing import Generic, TypeVar, Any
+from abc import ABC
+from typing import Generic, TypeVar, Union
 from pydantic import BaseModel
 from pydantic.fields import ModelField
 from pyddb.encoders import as_dict
 
 
-__all__ = ['CustomAttribute', 'KeyAttribute', 'DelimitedAttribute']
+__all__ = ['KeyAttribute', 'DelimitedAttribute']
 
 
 AttrType = TypeVar('AttrType')
-
-
-class Serializable(ABC):
-    @abstractmethod
-    def serialize(self) -> Any:
-        ...
-
-
-class Deserializable(ABC):
-    @classmethod
-    @abstractmethod
-    def deserialize(cls, values: Any) -> Any:
-        ...
 
 
 class KeyAttribute(Generic[AttrType]):
@@ -43,16 +30,21 @@ class KeyAttribute(Generic[AttrType]):
         return cls(valid_value)
 
 
-class DelimitedAttribute(Serializable, Deserializable, BaseModel):
+class DelimitedAttribute(ABC, BaseModel):
     class Settings:
         delimiter = "#"
 
     @classmethod
-    def deserialize(cls, values):
-        if isinstance(values, str):
-            return dict(zip(cls.__fields__.keys(), values.split(cls.Settings.delimiter)))
-        elif isinstance(values, (cls, dict)):
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, values: Union[str, dict, 'DelimitedAttribute']) -> 'DelimitedAttribute':
+        if isinstance(values, cls):
             return values
+        if isinstance(values, str):
+            values = dict(zip(cls.__fields__.keys(), values.split(cls.Settings.delimiter)))
+        return cls(**values)
 
     def serialize(self):
         return self.Settings.delimiter.join(map(str, as_dict(self, exclude_none=True).values()))

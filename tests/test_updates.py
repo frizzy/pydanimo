@@ -49,8 +49,7 @@ def test_update_item_with_optionals():
         something: Optional[str]
 
     item = FooItem(pk='foo')
-
-    # print(item.as_dict(exclude_unset=True))
+    assert item.as_dict(exclude_unset=True) == {'pk': 'foo'}
 
 
 def test_update_item():

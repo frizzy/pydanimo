@@ -1,6 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel, root_validator, create_model
-from pyddb.attributes import KeyAttribute, Deserializable, Serializable
+from pyddb.attributes import KeyAttribute
 from pyddb.encoders import as_dict
 
 
@@ -59,7 +59,7 @@ class BaseItem(BaseModel):
     def as_dict(self, **kwargs):
         model = self.copy(deep=True)
         for k, v in model:
-            if isinstance(v, Serializable):
+            if isinstance(v, BaseModel) and hasattr(v, 'serialize') and callable(v.serialize):
                 setattr(model, k, v.serialize())
 
         return as_dict(model, **kwargs)
@@ -87,16 +87,11 @@ class BaseItem(BaseModel):
     @classmethod
     def _pre_validate(cls, values):
         for key, field in cls.__fields__.items():
-            if issubclass(field.type_, Deserializable) and key in values:
-                values.update({key: field.type_.deserialize(values[key])})
-            elif field.sub_fields and issubclass(field.sub_fields[0].type_, Deserializable) and key in values:
-                values.update({key: field.sub_fields[0].type_.deserialize(values[key])})
+            if key in values and isinstance(values[key], KeyAttribute):
+                values[key] = values[key].value
         return values
 
     @root_validator(pre=False)
     @classmethod
     def _post_validate(cls, values):
-        for key, value in values.items():
-            if isinstance(value, KeyAttribute):
-                values.update({key: value.value})
-        return values
+        return cls._pre_validate(values)
