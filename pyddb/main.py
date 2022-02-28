@@ -1,6 +1,6 @@
 from typing import Optional
-from pydantic import BaseModel, root_validator, create_model
-from pyddb.attributes import KeyAttribute
+from attr import attributes
+from pydantic import BaseModel, create_model
 from pyddb.encoders import as_dict
 
 
@@ -33,7 +33,7 @@ class BaseItem(BaseModel):
     def index_key(cls, name: str, item=None, **kwargs):
         args = item.dict(exclude_unset=True) if item else kwargs
         ItemKeyClass = type(
-            'ItemKey',
+            f'ItemIndex{name.capitalize()}',
             (cls, ),
             {'__str__': to_str} if len(args) == 1 else {},
             item_keys=args.keys(),
@@ -42,11 +42,24 @@ class BaseItem(BaseModel):
         return ItemKeyClass(**args)
 
     @classmethod
+    def attributes(cls, item, **kwargs):
+        args = item.dict(exclude_unset=True) if item else kwargs
+        ItemClass = type(
+            'ItemAttributes',
+            (cls, ),
+            {},
+            attributes=True
+        )
+        return ItemClass(**args)
+
+    @classmethod
+    def is_key(cls, name):
+        return name in cls.Settings.keys
+
+    @classmethod
     def match(cls, name, **kwargs):
         if issubclass(cls.__fields__[name].type_, BaseModel):
             _type = cls.__fields__[name].type_
-        elif cls.__fields__[name].sub_fields and issubclass(cls.__fields__[name].sub_fields[0].type_, BaseModel):
-            _type = cls.__fields__[name].sub_fields[0].type_
         else:
             raise ValueError(f'{name} is not a matchable custom attribute')
 
@@ -65,8 +78,20 @@ class BaseItem(BaseModel):
         return as_dict(model, **kwargs)
 
     def __init_subclass__(cls, **kwargs) -> None:
+
+        attributes = kwargs.pop('attributes', False)
+        if attributes:
+            for key in list(cls.__fields__.keys()):
+                if cls.is_key(key):
+                    cls.__fields__.pop(key)
+                    continue
+
+            return super().__init_subclass__(**kwargs)
+
+        item_keys = kwargs.pop('item_keys', None)
         index = kwargs.pop('index', None)
-        if (item_keys := kwargs.pop('item_keys', None)):
+
+        if item_keys:
             if index and index not in cls.Settings.indexes:
                 raise ValueError(f'{index} is not a valid index')
             for key in list(cls.__fields__.keys()):
@@ -76,22 +101,9 @@ class BaseItem(BaseModel):
                 if index and key not in cls.Settings.indexes[index]:
                     cls.__fields__.pop(key)
                     continue
-                if not index and not issubclass(cls.__fields__[key].type_, KeyAttribute):
+                if not index and key not in cls.Settings.keys:
                     cls.__fields__.pop(key)
                     continue
                 cls.__fields__[key].outer_type_ = Optional
                 cls.__fields__[key].required = False
         super().__init_subclass__(**kwargs)
-
-    @root_validator(pre=True)
-    @classmethod
-    def _pre_validate(cls, values):
-        for key, field in cls.__fields__.items():
-            if key in values and isinstance(values[key], KeyAttribute):
-                values[key] = values[key].value
-        return values
-
-    @root_validator(pre=False)
-    @classmethod
-    def _post_validate(cls, values):
-        return cls._pre_validate(values)

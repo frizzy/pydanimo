@@ -1,6 +1,5 @@
 from typing import Optional
 from pyddb import BaseItem
-from pyddb.attributes import KeyAttribute
 from pyddb.update import update_args, Update
 from moto import mock_dynamodb2
 import boto3
@@ -9,7 +8,11 @@ import boto3
 def test_update_item_attribute():
 
     class MyItem(BaseItem):
-        my_id: KeyAttribute[str]
+
+        class Settings:
+            keys = ['my_id']
+
+        my_id: str
         age: int
         eye_color: str
 
@@ -27,7 +30,11 @@ def test_update_item_attribute():
 def test_update_item_attributes():
 
     class MyItem(BaseItem):
-        my_id: KeyAttribute[str]
+
+        class Settings:
+            keys = ['my_id']
+
+        my_id: str
         age: int
         eye_color: str
 
@@ -45,7 +52,11 @@ def test_update_item_attributes():
 def test_update_item_with_optionals():
 
     class FooItem(BaseItem):
-        pk: KeyAttribute[str]
+
+        class Settings:
+            keys = ['pk']
+
+        pk: str
         something: Optional[str]
 
     item = FooItem(pk='foo')
@@ -55,7 +66,11 @@ def test_update_item_with_optionals():
 def test_update_item():
 
     class MyItem(BaseItem):
-        my_id: KeyAttribute[str]
+
+        class Settings:
+            keys = ['my_id']
+
+        my_id: str
         age: int
         eye_color: str
 
