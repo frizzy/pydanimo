@@ -55,7 +55,7 @@ class Update():
             if hasattr(item_key, name):
                 continue
 
-            if self.value == MISSING and name not in attributes:
+            if self.value == MISSING and (name not in attributes or attributes[name] is None):
                 continue
 
             expressions.setdefault(self.action.value, [])

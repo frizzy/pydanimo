@@ -102,3 +102,18 @@ def test_update_item():
         assert update_item.my_id == read_item.my_id
 
         table.delete()
+
+
+def test_null_value_attributes():
+
+    class Foo(BaseItem):
+
+        class Settings:
+            keys = ['id']
+
+        id: str
+        something: Optional[str]
+
+    item = Foo(id='foo', something=None)
+    assert update_args(
+        item, Update().set(), ReturnValues='ALL_OLD')['ExpressionAttributeValues'] != {':something': None}
