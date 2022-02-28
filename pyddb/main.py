@@ -21,13 +21,17 @@ class BaseItem(BaseModel):
     @classmethod
     def key(cls, item=None, **kwargs):
         args = item.dict(exclude_unset=True) if item else kwargs
-        ItemKeyClass = type(
+        ItemKeyClass = cls.key_class(args)
+        return ItemKeyClass(**args)
+
+    @classmethod
+    def key_class(cls, args: list = []):
+        return type(
             'ItemKey',
             (cls, ),
             {'__str__': to_str} if len(args) == 1 else {},
-            item_keys=args.keys()
+            item_keys=args
         )
-        return ItemKeyClass(**args)
 
     @classmethod
     def index_key(cls, name: str, item=None, **kwargs):
@@ -91,7 +95,12 @@ class BaseItem(BaseModel):
         item_keys = kwargs.pop('item_keys', None)
         index = kwargs.pop('index', None)
 
-        if item_keys:
+        to_optional = True
+        if item_keys is not None:
+            if len(item_keys) == 0:
+                item_keys = cls.Settings.keys
+                to_optional = False
+
             if index and index not in cls.Settings.indexes:
                 raise ValueError(f'{index} is not a valid index')
             for key in list(cls.__fields__.keys()):
@@ -104,6 +113,7 @@ class BaseItem(BaseModel):
                 if not index and key not in cls.Settings.keys:
                     cls.__fields__.pop(key)
                     continue
-                cls.__fields__[key].outer_type_ = Optional
-                cls.__fields__[key].required = False
+                if to_optional:
+                    cls.__fields__[key].outer_type_ = Optional
+                    cls.__fields__[key].required = False
         super().__init_subclass__(**kwargs)
