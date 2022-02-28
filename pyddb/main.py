@@ -1,5 +1,4 @@
 from typing import Optional
-from attr import attributes
 from pydantic import BaseModel, create_model
 from pyddb.encoders import as_dict
 

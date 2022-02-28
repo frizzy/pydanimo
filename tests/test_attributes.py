@@ -38,7 +38,7 @@ def test_get_non_key_attributes():
         more: str
 
     foo = FooItem(id='my_id', something=1, more='something')
-    print(FooItem.attributes(foo))
+    assert FooItem.attributes(foo) == {'something': 1, 'more': 'something'}
 
 
 def test_optional_matchable_attribute():
