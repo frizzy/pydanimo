@@ -65,6 +65,9 @@ class Update():
 
     def _set(self, name, expressions):
         expressions[self.Action.SET.value].append(f'#{name} = :{name}')
+       
+    def _remove(self, name, expressions):
+        expressions[self.Action.REMOVE.value].append(f'#{name}')
 
     def _validate_value(self, value):
         if value != MISSING and len(self.names) != 1:
