@@ -1,5 +1,5 @@
 from dataclasses import MISSING
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Optional, Union, List
 from enum import Enum
 from uuid import uuid4
 
@@ -24,10 +24,11 @@ class Update():
         ADD = 'ADD'
         DELETE = 'DELETE'
 
-    def __init__(self, *names):
+    def __init__(self, *names, skip: Optional[List[str]] = None):
         self.names = names
         self.action = None
         self.value = MISSING
+        self.skip = skip or []
 
     def set(self, value: Optional[Union[str, int, float, list, set, dict, None, bool]] = MISSING):
         self.action = self.Action.SET
@@ -52,9 +53,10 @@ class Update():
         item_key = item.__class__.key(item)
 
         for name in self.names if self.names else item.__fields__.keys():
+            if name in self.skip:
+                continue
             if hasattr(item_key, name):
                 continue
-
             if self.value == MISSING and (name not in attributes or attributes[name] is None):
                 continue
 
@@ -65,7 +67,7 @@ class Update():
 
     def _set(self, name, expressions):
         expressions[self.Action.SET.value].append(f'#{name} = :{name}')
-       
+
     def _remove(self, name, expressions):
         expressions[self.Action.REMOVE.value].append(f'#{name}')
 
@@ -80,7 +82,8 @@ def update_args(item: 'BaseItem', *actions, **kwargs):
     names = {}
     values = {}
     for action in actions:
-        action(item, attributes, expressions, names, values)
+        if action:
+            action(item, attributes, expressions, names, values)
 
     return dict(
         Key=item.__class__.key(item).as_dict(),
