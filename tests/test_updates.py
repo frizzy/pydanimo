@@ -117,3 +117,20 @@ def test_null_value_attributes():
     item = Foo(id='foo', something=None)
     assert update_args(
         item, Update().set(), ReturnValues='ALL_OLD')['ExpressionAttributeValues'] != {':something': None}
+
+def test_remove_attributes():
+
+    class Foo(BaseItem):
+
+        class Settings:
+            keys = ['id']
+
+        id: str
+        age: int
+        something: Optional[str]
+
+    item = Foo(id='foo', age=25)
+    
+    args = update_args(item, Update(skip=['something']).set(), Update('something').remove())
+
+  

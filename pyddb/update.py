@@ -57,13 +57,16 @@ class Update():
                 continue
             if hasattr(item_key, name):
                 continue
-            if self.value == MISSING and (name not in attributes or attributes[name] is None):
-                continue
+            if self.action == self.Action.SET:
+                if self.value == MISSING and (name not in attributes or attributes[name] is None):
+                    continue
+            
 
             expressions.setdefault(self.action.value, [])
             getattr(self, f'_{self.action.value.lower()}')(name, expressions)
             names.update({f'#{name}': name})
-            values.update({f':{name}': attributes[name] if self.value == MISSING else self.value})
+            if self.action == self.Action.SET:
+                values.update({f':{name}': attributes[name] if self.value == MISSING else self.value})
 
     def _set(self, name, expressions):
         expressions[self.Action.SET.value].append(f'#{name} = :{name}')
