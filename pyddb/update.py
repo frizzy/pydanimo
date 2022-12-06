@@ -91,7 +91,7 @@ def update_args(item: 'BaseItem', *actions, **kwargs):
     return dict(
         Key=item.__class__.key(item).as_dict(),
         UpdateExpression=' '.join([f"{key} {', '.join(value)}" for key, value in expressions.items()]),
-        ExpressionAttributeValues=values,
+        **({'ExpressionAttributeValues': values} if values else {}),
         ExpressionAttributeNames=names,
         **kwargs
     )

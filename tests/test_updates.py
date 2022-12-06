@@ -116,7 +116,7 @@ def test_null_value_attributes():
 
     item = Foo(id='foo', something=None)
     assert update_args(
-        item, Update().set(), ReturnValues='ALL_OLD')['ExpressionAttributeValues'] != {':something': None}
+        item, Update().set(), ReturnValues='ALL_OLD').get('ExpressionAttributeValues') != {':something': None}
 
 def test_remove_attributes():
 
