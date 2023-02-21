@@ -3,6 +3,7 @@ from pyddb import BaseItem
 from pyddb.update import update_args, Update
 from moto import mock_dynamodb2
 import boto3
+from pydantic import Field
 
 
 def test_update_item_attribute():
@@ -112,11 +113,13 @@ def test_null_value_attributes():
             keys = ['id']
 
         id: str
-        something: Optional[str]
+        something: Optional[str] = None
 
     item = Foo(id='foo', something=None)
+
     assert update_args(
         item, Update().set(), ReturnValues='ALL_OLD').get('ExpressionAttributeValues') != {':something': None}
+
 
 def test_remove_attributes():
 
@@ -130,7 +133,5 @@ def test_remove_attributes():
         something: Optional[str]
 
     item = Foo(id='foo', age=25)
-    
-    args = update_args(item, Update(skip=['something']).set(), Update('something').remove())
 
-  
+    args = update_args(item, Update(skip=['something']).set(), Update('something').remove())

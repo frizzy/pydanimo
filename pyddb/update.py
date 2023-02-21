@@ -24,13 +24,14 @@ class Update():
         ADD = 'ADD'
         DELETE = 'DELETE'
 
-    def __init__(self, *names, skip: Optional[List[str]] = None):
+    def __init__(self, *names, skip: Optional[List[str]] = None, remove_null: bool = False):
         self.names = names
         self.action = None
         self.value = MISSING
         self.skip = skip or []
+        self.remove_null = remove_null
 
-    def set(self, value: Optional[Union[str, int, float, list, set, dict, None, bool]] = MISSING):
+    def set(self, value: Optional[Union[str, int, float, list, set, dict, None, bool]] = MISSING, remove_null: bool = False):
         self.action = self.Action.SET
         self._validate_value(value)
         self.value = value
@@ -59,8 +60,15 @@ class Update():
                 continue
             if self.action == self.Action.SET:
                 if self.value == MISSING and (name not in attributes or attributes[name] is None):
+                    if name in attributes and attributes[name] is None and self.remove_null:
+                        expressions.setdefault(self.Action.REMOVE.value, [])
+                        names.update({f'#{name}': name})
+                        self._remove(name, expressions)
                     continue
-            
+                if self.value is None and self.remove_null:
+                    expressions.setdefault(self.Action.REMOVE.value, [])
+                    names.update({f'#{name}': name})
+                    self._remove(name, expressions)
 
             expressions.setdefault(self.action.value, [])
             getattr(self, f'_{self.action.value.lower()}')(name, expressions)
